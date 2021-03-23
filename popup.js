@@ -15,6 +15,15 @@ changeColor.addEventListener("click", async () => {
   });
 });
 
+let blob = new Blob(['dummy content'], {type: 'text/plain'})
+let url = window.URL.createObjectURL(blob);
+chrome.downloads.download({url, saveAs: true}, function(id) {
+  console.log('iddd: ', id);
+    chrome.downloads.search({id: id}, function(results) {
+        console.log('results: ', results);
+    })
+});
+
 // The body of this function will be execuetd as a content script inside the
 // current page
 function setPageBackgroundColor() {
