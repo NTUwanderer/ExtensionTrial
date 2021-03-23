@@ -30,4 +30,41 @@ function setPageBackgroundColor() {
   chrome.storage.sync.get("color", ({ color }) => {
     document.body.style.backgroundColor = color;
   });
+
+  function getFirstElement(element, className) {
+    childs = element.getElementsByClassName(className);
+    if (!childs)
+      return false;
+    return childs[0];
+  }
+
+  // let wraps = document.getElementsByClassName("main-text-wrap");
+  let mainTextWrap = getFirstElement(document, "main-text-wrap");
+  if (!mainTextWrap) {
+    console.log("no wraps");
+  } else {
+    let h3 = getFirstElement(mainTextWrap, "j_chapterName");
+    if (!h3) {
+      console.log("no chapterName");
+    } else {
+      console.log("text: ", h3.firstElementChild.textContent);
+    }
+
+    let content = getFirstElement(mainTextWrap, "j_readContent");
+    if (!content) {
+      console.log("no content");
+    } else {
+      childs = content.getElementsByClassName("content-wrap");
+      console.log("childs: ", childs);
+      for (let i = 0; i < childs.length; ++i) {
+        let child = childs[i];
+        console.log(child.textContent);
+      }
+    }
+  }
+  let chapterNext = document.getElementById("j_chapterNext");
+  console.log('chapterNext: ', chapterNext);
+  // if (chapterNext) {
+  //   chapterNext.click();
+  // }
 }
