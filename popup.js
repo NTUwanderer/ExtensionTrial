@@ -13,11 +13,13 @@ chrome.runtime.onMessage.addListener(
     console.log("content: ", request.content);
     ++i;
 
-    let blob = new Blob([request.content], {type: 'text/plain'})
-    let url = window.URL.createObjectURL(blob);
-    chrome.downloads.download({url, saveAs: false, filename: "novel/" + i.toString() + ".txt"}, function(id) {
-      console.log('id: ', id);
-    });
+    fetch('http://localhost:8080', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: request.title,
+        content: request.content
+      })
+    })
 
     setTimeout(function() { changeColor.click(); }, 5000);
   }
@@ -51,6 +53,7 @@ function parseElements() {
 
   // let wraps = document.getElementsByClassName("main-text-wrap");
   let mainTextWrap = getFirstElement(document, "main-text-wrap");
+  let title = "";
   let contentText = "";
   if (!mainTextWrap) {
     console.log("no wraps");
@@ -59,7 +62,8 @@ function parseElements() {
     if (!h3) {
       console.log("no chapterName");
     } else {
-      console.log("text: ", h3.firstElementChild.textContent);
+      title = h3.firstElementChild.textContent;
+      console.log("title: ", title);
     }
 
     let content = getFirstElement(mainTextWrap, "j_readContent");
@@ -71,7 +75,7 @@ function parseElements() {
       for (let i = 0; i < childs.length; ++i) {
         let child = childs[i];
         console.log(child.textContent);
-        contentText += child.textContent;
+        contentText += child.textContent + "\n\n";
       }
     }
   }
@@ -83,7 +87,7 @@ function parseElements() {
   }
 
   if (contentText) {
-    chrome.runtime.sendMessage({content: contentText});
+    chrome.runtime.sendMessage({title: title, content: contentText});
   }
 }
 
