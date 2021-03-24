@@ -1,8 +1,32 @@
 // Initialize butotn with users's prefered color
 let changeColor = document.getElementById("changeColor");
+let outputButton = document.getElementById("outputButton");
+
+let i = 0;
 
 chrome.storage.sync.get("color", ({ color }) => {
   changeColor.style.backgroundColor = color;
+});
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log("content: ", request.content);
+    ++i;
+
+    let blob = new Blob([request.content], {type: 'text/plain'})
+    let url = window.URL.createObjectURL(blob);
+    chrome.downloads.download({url, saveAs: false, filename: "novel/" + i.toString() + ".txt"}, function(id) {
+      console.log('id: ', id);
+    });
+
+    setTimeout(function() { changeColor.click(); }, 5000);
+  }
+);
+
+outputButton.addEventListener("click", async () => {
+  chrome.storage.sync.get("contentText", ({ contentText }) => {
+    console.log("contentText: ", contentText);
+  });
 });
 
 // When the button is clicked, inject setPageBackgroundColor into current page
@@ -11,26 +35,13 @@ changeColor.addEventListener("click", async () => {
 
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    function: setPageBackgroundColor,
+    function: parseElements,
   });
-});
-
-let blob = new Blob(['dummy content'], {type: 'text/plain'})
-let url = window.URL.createObjectURL(blob);
-chrome.downloads.download({url, saveAs: true}, function(id) {
-  console.log('iddd: ', id);
-    chrome.downloads.search({id: id}, function(results) {
-        console.log('results: ', results);
-    })
 });
 
 // The body of this function will be execuetd as a content script inside the
 // current page
-function setPageBackgroundColor() {
-  chrome.storage.sync.get("color", ({ color }) => {
-    document.body.style.backgroundColor = color;
-  });
-
+function parseElements() {
   function getFirstElement(element, className) {
     childs = element.getElementsByClassName(className);
     if (!childs)
@@ -40,6 +51,7 @@ function setPageBackgroundColor() {
 
   // let wraps = document.getElementsByClassName("main-text-wrap");
   let mainTextWrap = getFirstElement(document, "main-text-wrap");
+  let contentText = "";
   if (!mainTextWrap) {
     console.log("no wraps");
   } else {
@@ -59,12 +71,19 @@ function setPageBackgroundColor() {
       for (let i = 0; i < childs.length; ++i) {
         let child = childs[i];
         console.log(child.textContent);
+        contentText += child.textContent;
       }
     }
   }
   let chapterNext = document.getElementById("j_chapterNext");
   console.log('chapterNext: ', chapterNext);
-  // if (chapterNext) {
-  //   chapterNext.click();
-  // }
+  if (chapterNext) {
+    chapterNext.click();
+    console.log("clicked");
+  }
+
+  if (contentText) {
+    chrome.runtime.sendMessage({content: contentText});
+  }
 }
+
