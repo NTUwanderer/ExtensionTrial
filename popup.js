@@ -2,8 +2,6 @@
 let changeColor = document.getElementById("changeColor");
 let outputButton = document.getElementById("outputButton");
 
-let i = 0;
-
 chrome.storage.sync.get("color", ({ color }) => {
   changeColor.style.backgroundColor = color;
 });
@@ -11,25 +9,31 @@ chrome.storage.sync.get("color", ({ color }) => {
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log("content: ", request.content);
-    ++i;
 
     fetch('http://localhost:8080', {
       method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         title: request.title,
         content: request.content
-      })
-    })
+      }),
+    });
 
-    setTimeout(function() { changeColor.click(); }, 5000);
+    outputButton.click();
   }
 );
 
 outputButton.addEventListener("click", async () => {
-  chrome.storage.sync.get("contentText", ({ contentText }) => {
-    console.log("contentText: ", contentText);
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    function: nextPage,
   });
 });
+
+setInterval(function() { changeColor.click(); }, 4000);
 
 // When the button is clicked, inject setPageBackgroundColor into current page
 changeColor.addEventListener("click", async () => {
@@ -40,6 +44,15 @@ changeColor.addEventListener("click", async () => {
     function: parseElements,
   });
 });
+
+function nextPage() {
+  let chapterNext = document.getElementById("j_chapterNext");
+  console.log('chapterNext: ', chapterNext);
+  if (chapterNext) {
+    chapterNext.click();
+    console.log("clicked");
+  }
+}
 
 // The body of this function will be execuetd as a content script inside the
 // current page
@@ -71,19 +84,16 @@ function parseElements() {
       console.log("no content");
     } else {
       childs = content.getElementsByClassName("content-wrap");
-      console.log("childs: ", childs);
+      console.log("length: ", childs.length);
+      if (childs.length < 5)
+        return;
+
       for (let i = 0; i < childs.length; ++i) {
         let child = childs[i];
         console.log(child.textContent);
         contentText += child.textContent + "\n\n";
       }
     }
-  }
-  let chapterNext = document.getElementById("j_chapterNext");
-  console.log('chapterNext: ', chapterNext);
-  if (chapterNext) {
-    chapterNext.click();
-    console.log("clicked");
   }
 
   if (contentText) {
