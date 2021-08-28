@@ -33,7 +33,7 @@ outputButton.addEventListener("click", async () => {
   });
 });
 
-setInterval(function() { changeColor.click(); }, 4000);
+setInterval(function() { changeColor.click(); }, 500);
 
 // When the button is clicked, inject setPageBackgroundColor into current page
 changeColor.addEventListener("click", async () => {
